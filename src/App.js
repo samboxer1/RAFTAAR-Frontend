@@ -1,7 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import "./responsive.css";
-import { BrowserRouter, Route, Router, Routes, json } from "react-router-dom";
+import { BrowserRouter, Route,Routes} from "react-router-dom";
 import Home from "./Pages/Home";
 import Listing from "./Pages/Listing";
 import ProductDetails from "./Pages/ProductDetails";

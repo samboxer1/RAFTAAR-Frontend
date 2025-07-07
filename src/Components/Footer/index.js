@@ -9,7 +9,7 @@ import { FaInstagram } from "react-icons/fa";
 import newsLetterImg from "../../assets/images/newsletter.png";
 import Button from "@mui/material/Button";
 import { IoMailOutline } from "react-icons/io5";
-import Banners from "../banners/index";
+// import Banners from "../banners/index";
 import { useEffect, useState } from "react";
 import { fetchDataFromApi } from "../../utils/api";
 
@@ -40,7 +40,7 @@ const Footer = () => {
             </div>
 
             <div className="col-md-6">
-              <img src={newsLetterImg} />
+             <img src={newsLetterImg} alt="Newsletter signup illustration" />
             </div>
           </div>
         </div>

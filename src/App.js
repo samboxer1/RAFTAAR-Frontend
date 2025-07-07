@@ -79,13 +79,24 @@ function App() {
 
  const subCatArr=[];
 
-        res.categoryList?.length !== 0 && res.categoryList?.map((cat, index) => {
-                if(cat?.children.length!==0){
-                    cat?.children?.map((subCat)=>{
-                        subCatArr.push(subCat);
-                    })
-                }
-        });
+        if (res.categoryList?.length !== 0) {
+  res.categoryList.forEach((cat) => {
+    if (cat?.children?.length !== 0) {
+      cat.children.forEach((subCat) => {
+        subCatArr.push(subCat);
+      });
+    }
+  });
+}
+
+// replced above
+//  res.categoryList?.length !== 0 && res.categoryList?.map((cat, index) => {
+//                 if(cat?.children.length!==0){
+//                     cat?.children?.map((subCat)=>{
+//                         subCatArr.push(subCat);
+//                     })
+//                 }
+//         });
 
        setsubCategoryData(subCatArr);
 
@@ -141,11 +152,17 @@ function App() {
     });
   };
 
+  // const getCountry = async (url) => {
+  //   const responsive = await axios.get(url).then((res) => {
+  //     setCountryList(res.data.data);
+  //   });
+  // };
+
   const getCountry = async (url) => {
-    const responsive = await axios.get(url).then((res) => {
-      setCountryList(res.data.data);
-    });
-  };
+  const res = await axios.get(url);
+  setCountryList(res.data.data);
+};
+
 
   const handleClose = (event, reason) => {
     if (reason === "clickaway") {

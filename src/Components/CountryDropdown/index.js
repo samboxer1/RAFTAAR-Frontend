@@ -29,9 +29,14 @@ const CountryDropdown = () => {
         window.location.href = "/";
     }
 
+    // useEffect(() => {
+    //     setcountryList(context.countryList);
+    // }, [])
+
     useEffect(() => {
-        setcountryList(context.countryList);
-    }, [])
+    setcountryList(context.countryList);
+}, [context.countryList]);
+
 
     const filterList = (e) => {
         const keyword = e.target.value.toLowerCase();
@@ -77,9 +82,26 @@ const CountryDropdown = () => {
                         countryList?.length !== 0 && countryList?.map((item, index) => {
                      
                             return (
-                                <li key={index}><Button onClick={() => selectCountry(index, item.iso2)}
-                                    className={`${selectedTab === index ? 'active' : ''}`}
-                                >{item.country}</Button></li>
+                                // <li key={index}><Button onClick={() => selectCountry(index, item.iso2)}
+                                //     className={`${selectedTab === index ? 'active' : ''}`}
+                                // >{item.country}</Button></li>
+
+                                <li key={index}>
+  <Button
+    onClick={() => selectCountry(index, item.iso2)}
+    className={`${selectedTab === index ? 'active' : ''}`}
+  >
+    {item.flag && (
+      <img
+        src={item.flag}
+        alt={`Flag of ${item.country}`}
+        style={{ width: 20, height: 15, marginRight: 8 }}
+      />
+    )}
+    {item.country}
+  </Button>
+</li>
+
                             )
                         })
                     }

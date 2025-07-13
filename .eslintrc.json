@@ -1,0 +1,10 @@
+{
+  "extends": "react-app",
+  "rules": {
+    "jsx-a11y/alt-text": "warn",
+    "no-unused-vars": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "jsx-a11y/anchor-is-valid": "warn",
+    "array-callback-return": "warn"
+  }
+}

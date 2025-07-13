@@ -6,6 +6,7 @@ import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
 import newsLetterImg from "../../assets/images/newsletter.png";
 import Button from "@mui/material/Button";
 import { IoMailOutline } from "react-icons/io5";
+import React from 'react'; // Add at the top
 
 const Footer = () => {
   const footerLinks = [

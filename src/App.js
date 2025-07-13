@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+import React from 'react'; // Add at the top
 import "./responsive.css";
 import { BrowserRouter, Route,Routes} from "react-router-dom";
 import Home from "./Pages/Home";

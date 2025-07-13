@@ -1,4 +1,6 @@
 import Dialog from '@mui/material/Dialog';
+import React from 'react';
+import QuantityBox from '../QuantityBox'; // Add at the top
 import { MdClose } from "react-icons/md";
 import Button from '@mui/material/Button';
 import Rating from '@mui/material/Rating';

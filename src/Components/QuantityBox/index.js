@@ -1,62 +1,89 @@
-import { FaMinus } from "react-icons/fa6";
-import { FaPlus } from "react-icons/fa6";
+import { FaMinus, FaPlus } from "react-icons/fa6";
 import Button from '@mui/material/Button';
 import { useContext, useEffect, useState } from "react";
 import { MyContext } from "../../App";
+import PropTypes from 'prop-types';
 
-const QuantityBox = (props) => {
-
+const QuantityBox = ({ value, item, quantity, selectedItem }) => {
     const [inputVal, setInputVal] = useState(1);
-
     const context = useContext(MyContext);
 
     useEffect(() => {
-        if (props?.value !== undefined && props?.value !== null && props?.value !== "") {
-            setInputVal(parseInt(props?.value))
+        if (value !== undefined && value !== null && value !== "") {
+            setInputVal(parseInt(value));
         }
-    }, [props.value])
+    }, [value]);
 
-    const minus = () => {
-        if (inputVal !== 1 && inputVal > 0) {
-            setInputVal(inputVal - 1);
+    const handleMinus = () => {
+        if (inputVal > 1) {
+            const newValue = inputVal - 1;
+            setInputVal(newValue);
+            updateQuantity(newValue);
         }
-        context.setAlertBox({
-            open:false,
-        })
+        context.setAlertBox({ open: false });
+    };
 
-    }
-
-    const plus = () => {
-        let stock = parseInt(props.item.countInStock);
-        if(inputVal<stock){
-            setInputVal(inputVal + 1);
-        }else{
+    const handlePlus = () => {
+        const stock = parseInt(item?.countInStock || 10);
+        if (inputVal < stock) {
+            const newValue = inputVal + 1;
+            setInputVal(newValue);
+            updateQuantity(newValue);
+        } else {
             context.setAlertBox({
-                open:true,
-                error:true,
-                msg:"The quantity is greater than product count in stock"
-            })
+                open: true,
+                error: true,
+                msg: "Quantity exceeds available stock"
+            });
         }
-    }
+    };
 
-    useEffect(() => {
-        if (props.quantity) {
-            props.quantity(inputVal)
+    const handleInputChange = (e) => {
+        const value = parseInt(e.target.value);
+        if (!isNaN(value) && value > 0 && value <= item?.countInStock) {
+            setInputVal(value);
+            updateQuantity(value);
         }
+    };
 
-        if (props.selectedItem) {
-            props.selectedItem(props.item, inputVal);
-        }
-
-    }, [inputVal]);
+    const updateQuantity = (value) => {
+        if (quantity) quantity(value);
+        if (selectedItem) selectedItem(item, value);
+    };
 
     return (
         <div className='quantityDrop d-flex align-items-center'>
-            <Button onClick={minus}><FaMinus /></Button>
-            <input type="text" value={inputVal} />
-            <Button onClick={plus}><FaPlus /></Button>
+            <Button 
+                onClick={handleMinus} 
+                aria-label="Decrease quantity"
+                disabled={inputVal <= 1}
+            >
+                <FaMinus />
+            </Button>
+            <input 
+                type="number" 
+                value={inputVal} 
+                onChange={handleInputChange}
+                min="1"
+                max={item?.countInStock}
+                aria-label="Product quantity"
+            />
+            <Button 
+                onClick={handlePlus} 
+                aria-label="Increase quantity"
+                disabled={inputVal >= item?.countInStock}
+            >
+                <FaPlus />
+            </Button>
         </div>
-    )
-}
+    );
+};
+
+QuantityBox.propTypes = {
+    value: PropTypes.number,
+    item: PropTypes.object.isRequired,
+    quantity: PropTypes.func,
+    selectedItem: PropTypes.func
+};
 
 export default QuantityBox;

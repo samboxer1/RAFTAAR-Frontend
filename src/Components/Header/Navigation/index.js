@@ -70,6 +70,7 @@ const Navigation = (props) => {
                               src={item?.images[0]}
                               width="20"
                               className="mr-2"
+                              alt=""
                             />{" "}
                             {item?.name} <FaAngleRight className="ml-auto" />
                           </Button>
@@ -144,6 +145,7 @@ const Navigation = (props) => {
                               src={item?.images[0]}
                               width="20"
                               className="mr-2"
+                              alt=""
                             />{" "}
                             {item?.name}
                           </Button>

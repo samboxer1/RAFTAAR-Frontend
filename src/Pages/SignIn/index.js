@@ -1,286 +1,265 @@
 import { useContext, useEffect, useState } from "react";
-import Logo from "../../assets/images/logo.jpg";
-import { MyContext } from "../../App";
+import { Link, useNavigate } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import { Link, useNavigate } from "react-router-dom";
-
-import GoogleImg from "../../assets/images/googleImg.png";
 import CircularProgress from "@mui/material/CircularProgress";
-import { postData } from "../../utils/api";
-
-
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { firebaseApp } from "../../firebase";
+import { MyContext } from "../../App";
+import { postData } from "../../utils/api";
+import PropTypes from 'prop-types';
 
 const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
-const SignIn = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const context = useContext(MyContext);
-  const history = useNavigate();
-
-  useEffect(() => {
-    context.setisHeaderFooterShow(false);
-    
-    context.setEnableFilterTab(false);
-  }, []);
-
-  const [formfields, setFormfields] = useState({
-    email: "",
-    password: "",
-  });
-
-  const onchangeInput = (e) => {
-    setFormfields(() => ({
-      ...formfields,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const login = (e) => {
-    e.preventDefault();
-
-    if (formfields.email === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "email can not be blank!",
-      });
-      return false;
-    }
-
-    if (formfields.password === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "password can not be blank!",
-      });
-      return false;
-    }
-
-    setIsLoading(true);
-    postData("/api/user/signin", formfields).then((res) => {
-      try {
-        if (res.error !== true) {
-          localStorage.setItem("token", res.token);
-
-          const user = {
-            name: res.user?.name,
-            email: res.user?.email,
-            userId: res.user?.id,
-            image:res?.user?.images[0]
-          }
-
-          localStorage.setItem("user", JSON.stringify(user));
-          context.setUser(JSON.stringify(user))
-
-          context.setAlertBox({
-            open: true,
-            error: false,
-            msg: res.msg,
-          });
-
-          setTimeout(() => {
-            history("/");
-            context.setIsLogin(true);
-            setIsLoading(false);
-            context.setisHeaderFooterShow(true);
-            //window.location.href = "/";
-          }, 2000);
-        } else {
-          context.setAlertBox({
-            open: true,
-            error: true,
-            msg: res.msg,
-          });
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.log(error);
-        setIsLoading(false);
-      }
+const SignIn = ({ onSuccess }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [formFields, setFormFields] = useState({
+        email: "",
+        password: "",
     });
-  };
+    const context = useContext(MyContext);
+    const navigate = useNavigate();
 
-  const signInWithGoogle = () => {
-    
-    signInWithPopup(auth, googleProvider)
-      .then((result) => {
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        // The signed-in user info.
-        const user = result.user;
+    useEffect(() => {
+        context.setisHeaderFooterShow(false);
+        context.setEnableFilterTab(false);
+    }, [context]);
 
-        const fields={
-            name:user.providerData[0].displayName,
-            email: user.providerData[0].email,
-            password: null,
-            images:user.providerData[0].photoURL,
-            phone:user.providerData[0].phoneNumber
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormFields(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        
+        if (!formFields.email) {
+            context.setAlertBox({
+                open: true,
+                error: true,
+                msg: "Email is required"
+            });
+            return;
         }
 
-        postData("/api/user/authWithGoogle", fields).then((res) => {
-            try {
-              if (res.error !== true) {
-                localStorage.setItem("token", res.token);
-      
-                const user = {
-                  name: res.user?.name,
-                  email: res.user?.email,
-                  userId: res.user?.id,
-                };
-      
-                localStorage.setItem("user", JSON.stringify(user));
-      
-                context.setAlertBox({
-                  open: true,
-                  error: false,
-                  msg: res.msg,
-                });
-      
-                setTimeout(() => {
-                  history("/");
-                  context.setIsLogin(true);
-                  setIsLoading(false);
-                  context.setisHeaderFooterShow(true);
-                  //window.location.href = "/";
-                }, 2000);
-              } else {
-                context.setAlertBox({
-                  open: true,
-                  error: true,
-                  msg: res.msg,
-                });
-                setIsLoading(false);
-              }
-            } catch (error) {
-              console.log(error);
-              setIsLoading(false);
+        if (!formFields.password) {
+            context.setAlertBox({
+                open: true,
+                error: true,
+                msg: "Password is required"
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        
+        try {
+            const res = await postData("/api/user/signin", formFields);
+            
+            if (res.error) {
+                throw new Error(res.msg);
             }
-          });
 
-        context.setAlertBox({
-          open: true,
-          error: false,
-          msg: "User authentication Successfully!",
-        });
+            localStorage.setItem("token", res.token);
+            const user = {
+                name: res.user?.name,
+                email: res.user?.email,
+                userId: res.user?.id,
+                image: res.user?.images?.[0]
+            };
+            localStorage.setItem("user", JSON.stringify(user));
+            context.setUser(user);
 
-       // window.location.href = "/";
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        context.setAlertBox({
-          open: true,
-          error: true,
-          msg: errorMessage,
-        });
-        // ...
-      });
-  };
+            context.setAlertBox({
+                open: true,
+                error: false,
+                msg: "Login successful"
+            });
 
-  return (
-    <section className="section signInPage">
-      <div className="shape-bottom">
-        {" "}
-        <svg
-          fill="#fff"
-          id="Layer_1"
-          x="0px"
-          y="0px"
-          viewBox="0 0 1921 819.8"
-          style={{ enableBackground: "new 0 0 1921 819.8" }}
-        >
-          {" "}
-          <path
-            class="st0"
-            d="M1921,413.1v406.7H0V0.5h0.4l228.1,598.3c30,74.4,80.8,130.6,152.5,168.6c107.6,57,212.1,40.7,245.7,34.4 c22.4-4.2,54.9-13.1,97.5-26.6L1921,400.5V413.1z"
-          ></path>{" "}
-        </svg>
-      </div>
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                navigate("/");
+                context.setIsLogin(true);
+                context.setisHeaderFooterShow(true);
+            }
+        } catch (error) {
+            context.setAlertBox({
+                open: true,
+                error: true,
+                msg: error.message || "Login failed"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-      <div className="container">
-        <div className="box card p-3 shadow border-0">
-          <div className="text-center">
-            <img src={Logo} />
-          </div>
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            
+            const fields = {
+                name: user.displayName,
+                email: user.email,
+                password: null,
+                images: user.photoURL,
+                phone: user.phoneNumber
+            };
 
-          <form className="mt-3" onSubmit={login}>
-            <h2 className="mb-4">Sign In</h2>
+            const res = await postData("/api/user/authWithGoogle", fields);
+            
+            if (res.error) {
+                throw new Error(res.msg);
+            }
 
-            <div className="form-group">
-              <TextField
-                id="standard-basic"
-                label="Email"
-                type="email"
-                required
-                variant="standard"
-                className="w-100"
-                name="email"
-                onChange={onchangeInput}
-              />
+            localStorage.setItem("token", res.token);
+            const userData = {
+                name: res.user?.name,
+                email: res.user?.email,
+                userId: res.user?.id,
+            };
+            localStorage.setItem("user", JSON.stringify(userData));
+            context.setUser(userData);
+
+            context.setAlertBox({
+                open: true,
+                error: false,
+                msg: "Google login successful"
+            });
+
+            navigate("/");
+            context.setIsLogin(true);
+            context.setisHeaderFooterShow(true);
+        } catch (error) {
+            context.setAlertBox({
+                open: true,
+                error: true,
+                msg: error.message || "Google login failed"
+            });
+        }
+    };
+
+    return (
+        <section className="section signInPage">
+            <div className="container">
+                <div className="box card p-3 shadow border-0">
+                    <div className="text-center">
+                        <img 
+                            src={Logo} 
+                            alt="Company Logo" 
+                            className="auth-logo"
+                        />
+                    </div>
+
+                    <form onSubmit={handleLogin} className="mt-3">
+                        <h1 className="mb-4">Sign In</h1>
+
+                        <div className="form-group mb-3">
+                            <TextField
+                                label="Email Address"
+                                type="email"
+                                name="email"
+                                value={formFields.email}
+                                onChange={handleInputChange}
+                                required
+                                fullWidth
+                                variant="outlined"
+                                inputProps={{
+                                    'aria-label': 'Email address',
+                                    autoComplete: 'email'
+                                }}
+                            />
+                        </div>
+
+                        <div className="form-group mb-3">
+                            <TextField
+                                label="Password"
+                                type="password"
+                                name="password"
+                                value={formFields.password}
+                                onChange={handleInputChange}
+                                required
+                                fullWidth
+                                variant="outlined"
+                                inputProps={{
+                                    'aria-label': 'Password',
+                                    autoComplete: 'current-password'
+                                }}
+                            />
+                        </div>
+
+                        <div className="d-flex justify-content-between mb-3">
+                            <Link 
+                                to="/forgot-password" 
+                                className="text-decoration-none"
+                                aria-label="Forgot password?"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
+
+                        <div className="d-grid gap-2 mb-3">
+                            <Button 
+                                type="submit" 
+                                variant="contained" 
+                                size="large"
+                                disabled={isLoading}
+                                aria-label="Sign in"
+                            >
+                                {isLoading ? (
+                                    <CircularProgress size={24} color="inherit" />
+                                ) : (
+                                    "Sign In"
+                                )}
+                            </Button>
+                        </div>
+
+                        <div className="text-center mb-3">
+                            <span className="d-inline-block mx-2">or</span>
+                        </div>
+
+                        <div className="d-grid gap-2">
+                            <Button
+                                variant="outlined"
+                                onClick={handleGoogleSignIn}
+                                startIcon={
+                                    <img 
+                                        src={GoogleImg} 
+                                        alt="Google logo" 
+                                        width="20"
+                                        height="20"
+                                    />
+                                }
+                                aria-label="Sign in with Google"
+                            >
+                                Sign In with Google
+                            </Button>
+                        </div>
+
+                        <div className="text-center mt-3">
+                            <span>Don't have an account? </span>
+                            <Link 
+                                to="/signUp" 
+                                className="text-decoration-none"
+                                aria-label="Sign up"
+                            >
+                                Sign Up
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div className="form-group">
-              <TextField
-                id="standard-basic"
-                label="Password"
-                type="password"
-                required
-                variant="standard"
-                className="w-100"
-                name="password"
-                onChange={onchangeInput}
-              />
-            </div>
+        </section>
+    );
+};
 
-            <a className="border-effect cursor txt">Forgot Password?</a>
-
-            <div className="d-flex align-items-center mt-3 mb-3 ">
-              <Button type="submit" className="btn-blue col btn-lg btn-big">
-                {isLoading === true ? <CircularProgress /> : "Sign In"}
-              </Button>
-              <Link to="/">
-                {" "}
-                <Button
-                  className="btn-lg btn-big col ml-3"
-                  variant="outlined"
-                  onClick={() => context.setisHeaderFooterShow(true)}
-                >
-                  Cancel
-                </Button>
-              </Link>
-            </div>
-
-            <p className="txt">
-              Not Registered?{" "}
-              <Link to="/signUp" className="border-effect">
-                Sign Up
-              </Link>
-            </p>
-
-            <h6 className="mt-4 text-center font-weight-bold">
-              Or continue with social account
-            </h6>
-
-            <Button
-              className="loginWithGoogle mt-2"
-              variant="outlined"
-              onClick={signInWithGoogle}
-            >
-              <img src={GoogleImg} /> Sign In with Google
-            </Button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
+SignIn.propTypes = {
+    onSuccess: PropTypes.func
 };
 
 export default SignIn;

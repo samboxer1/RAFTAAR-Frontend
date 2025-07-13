@@ -31,7 +31,7 @@ const HomeBanner = (props) => {
                             return (
                                 <SwiperSlide key={index}>
                                     <div className="item">
-                                        <img src={item?.images[0]} className="w-100" />
+                                        <img src={item?.images[0]} className="w-100" alt=""/>
                                     </div>
                                 </SwiperSlide>
                             )

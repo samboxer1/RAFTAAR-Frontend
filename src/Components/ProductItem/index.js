@@ -145,11 +145,11 @@ const ProductItem = (props) => {
                 <IoIosImages />
               </Skeleton>
             ) : (
-              <img src={props.item?.images[0]} className="w-100 img1" />
+              <img src={props.item?.images[0]} className="w-100 img1" alt="" />
             )}
 
             {props.item?.images.length > 1 && (
-              <img src={props.item?.images[1]} className="w-100 img2" />
+              <img src={props.item?.images[1]} className="w-100 img2" alt="" />
             )}
 
 

@@ -1,350 +1,297 @@
 import React, { useContext, useEffect, useState } from "react";
+import PropTypes from 'prop-types';
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { IoBagCheckOutline } from "react-icons/io5";
-
 import { MyContext } from "../../App";
 import { fetchDataFromApi, postData, deleteData } from "../../utils/api";
-
 import { useNavigate } from "react-router-dom";
 
-const Checkout = () => {
-  const [formFields, setFormFields] = useState({
-    fullName: "",
-    country: "",
-    streetAddressLine1: "",
-    streetAddressLine2: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    phoneNumber: "",
-    email: "",
-  });
+const initialFormState = {
+  fullName: "",
+  country: "",
+  streetAddressLine1: "",
+  streetAddressLine2: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  phoneNumber: "",
+  email: "",
+};
 
+const Checkout = () => {
+  const [formFields, setFormFields] = useState(initialFormState);
   const [cartData, setCartData] = useState([]);
-  const [totalAmount, setTotalAmount] = useState();
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const context = useContext(MyContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
     context.setEnableFilterTab(false);
-    const user = JSON.parse(localStorage.getItem("user"));
-    fetchDataFromApi(`/api/cart?userId=${user?.userId}`).then((res) => {
-      setCartData(res);
+    
+    const fetchCartData = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user?.userId) return;
+        
+        const res = await fetchDataFromApi(`/api/cart?userId=${user.userId}`);
+        setCartData(res);
+        
+        const calculatedTotal = res?.reduce(
+          (total, item) => total + (parseInt(item.price) * item.quantity),
+          0
+        );
+        setTotalAmount(calculatedTotal || 0);
+      } catch (error) {
+        console.error("Error fetching cart data:", error);
+      }
+    };
 
-      setTotalAmount(
-        res.length !== 0 &&
-          res
-            .map((item) => parseInt(item.price) * item.quantity)
-            .reduce((total, value) => total + value, 0)
-      );
-    });
-  }, []);
+    fetchCartData();
+  }, [context]);
 
-  const onChangeInput = (e) => {
-    setFormFields(() => ({
-      ...formFields,
-      [e.target.name]: e.target.value,
-    }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormFields(prev => ({ ...prev, [name]: value }));
   };
 
-  const context = useContext(MyContext);
-  const history = useNavigate();
+  const validateForm = () => {
+    const requiredFields = [
+      { field: "fullName", message: "Please fill full name" },
+      { field: "country", message: "Please fill country" },
+      { field: "streetAddressLine1", message: "Please fill street address" },
+      { field: "city", message: "Please fill city" },
+      { field: "state", message: "Please fill state" },
+      { field: "zipCode", message: "Please fill zip code" },
+      { field: "phoneNumber", message: "Please fill phone number" },
+      { field: "email", message: "Please fill email" },
+    ];
 
-  const checkout = (e) => {
-    e.preventDefault();
-
-    console.log(cartData);
-
-    console.log(formFields);
-    if (formFields.fullName === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill full name ",
-      });
-      return false;
-    }
-
-    if (formFields.country === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill country ",
-      });
-      return false;
-    }
-
-    if (formFields.streetAddressLine1 === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill Street address",
-      });
-      return false;
-    }
-
-    if (formFields.streetAddressLine2 === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill  Street address",
-      });
-      return false;
-    }
-
-    if (formFields.city === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill city ",
-      });
-      return false;
-    }
-
-    if (formFields.state === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill state ",
-      });
-      return false;
-    }
-
-    if (formFields.zipCode === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill zipCode ",
-      });
-      return false;
-    }
-
-    if (formFields.phoneNumber === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill phone Number ",
-      });
-      return false;
-    }
-
-    if (formFields.email === "") {
-      context.setAlertBox({
-        open: true,
-        error: true,
-        msg: "Please fill email",
-      });
-      return false;
-    }
-
-    const addressInfo = {
-      name: formFields.fullName,
-      phoneNumber: formFields.phoneNumber,
-      address: formFields.streetAddressLine1 + formFields.streetAddressLine2,
-      pincode: formFields.zipCode,
-      date: new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      }),
-    };
-
-    var options = {
-      key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-      key_secret: process.env.REACT_APP_RAZORPAY_KEY_SECRET,
-      amount: parseInt(totalAmount * 100),
-      currency: "INR",
-      order_receipt: "order_rcptid_" + formFields.fullName,
-      name: "E-Bharat",
-      description: "for testing purpose",
-      handler: function (response) {
-        console.log(response);
-
-        const paymentId = response.razorpay_payment_id;
-
-        const user = JSON.parse(localStorage.getItem("user"));
-
-        const payLoad = {
-          name: addressInfo.name,
-          phoneNumber: formFields.phoneNumber,
-          address: addressInfo.address,
-          pincode: addressInfo.pincode,
-          amount: parseInt(totalAmount),
-          paymentId: paymentId,
-          email: user.email,
-          userid: user.userId,
-          products: cartData,
-          date:addressInfo?.date
-        };
-
-        console.log(payLoad)
-          
-
-        postData(`/api/orders/create`, payLoad).then((res) => {
-             fetchDataFromApi(`/api/cart?userId=${user?.userId}`).then((res) => {
-            res?.length!==0 && res?.map((item)=>{
-                deleteData(`/api/cart/${item?.id}`).then((res) => {
-                })    
-            })
-                setTimeout(()=>{
-                    context.getCartData();
-                },1000);
-                history("/orders");
-          });
-         
+    for (const { field, message } of requiredFields) {
+      if (!formFields[field].trim()) {
+        context.setAlertBox({
+          open: true,
+          error: true,
+          msg: message,
         });
-      },
+        return false;
+      }
+    }
+    return true;
+  };
 
-      theme: {
-        color: "#3399cc",
-      },
-    };
+  const processOrder = async (paymentResponse) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const addressInfo = {
+        name: formFields.fullName,
+        phoneNumber: formFields.phoneNumber,
+        address: `${formFields.streetAddressLine1} ${formFields.streetAddressLine2}`,
+        pincode: formFields.zipCode,
+        date: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        }),
+      };
 
-    var pay = new window.Razorpay(options);
-    pay.open();
+      const payload = {
+        ...addressInfo,
+        amount: totalAmount,
+        paymentId: paymentResponse.razorpay_payment_id,
+        email: user.email,
+        userid: user.userId,
+        products: cartData,
+      };
+
+      await postData("/api/orders/create", payload);
+      
+      // Clear cart after successful order
+      await Promise.all(
+        cartData.map(item => 
+          deleteData(`/api/cart/${item.id}`).catch(console.error)
+        )
+      );
+      
+      context.getCartData();
+      navigate("/orders");
+    } catch (error) {
+      console.error("Order processing error:", error);
+      context.setAlertBox({
+        open: true,
+        error: true,
+        msg: "Error processing your order. Please try again.",
+      });
+    }
+  };
+
+  const handleCheckout = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    if (cartData.length === 0) {
+      context.setAlertBox({
+        open: true,
+        error: true,
+        msg: "Your cart is empty",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const options = {
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+        key_secret: process.env.REACT_APP_RAZORPAY_KEY_SECRET,
+        amount: totalAmount * 100,
+        currency: "INR",
+        name: "E-Bharat",
+        description: "Order Payment",
+        handler: processOrder,
+        theme: { color: "#3399cc" },
+      };
+
+      const paymentInstance = new window.Razorpay(options);
+      paymentInstance.open();
+    } catch (error) {
+      console.error("Payment initialization error:", error);
+      context.setAlertBox({
+        open: true,
+        error: true,
+        msg: "Error initializing payment",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateSubtotal = (items) => {
+    return items?.reduce(
+      (total, item) => total + (parseInt(item.price) * item.quantity),
+      0
+    ) || 0;
   };
 
   return (
     <section className="section">
       <div className="container">
-        <form className="checkoutForm" onSubmit={checkout}>
+        <form className="checkoutForm" onSubmit={handleCheckout}>
           <div className="row">
             <div className="col-md-8">
               <h2 className="hd">BILLING DETAILS</h2>
 
               <div className="row mt-3">
                 <div className="col-md-6">
-                  <div className="form-group">
-                    <TextField
-                      label="Full Name *"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="fullName"
-                      onChange={onChangeInput}
-                    />
-                  </div>
+                  <TextField
+                    label="Full Name *"
+                    variant="outlined"
+                    className="w-100"
+                    size="small"
+                    name="fullName"
+                    value={formFields.fullName}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
 
                 <div className="col-md-6">
-                  <div className="form-group">
-                    <TextField
-                      label="Country *"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="country"
-                      onChange={onChangeInput}
-                    />
-                  </div>
+                  <TextField
+                    label="Country *"
+                    variant="outlined"
+                    className="w-100"
+                    size="small"
+                    name="country"
+                    value={formFields.country}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
               </div>
 
               <h6>Street address *</h6>
-
-              <div className="row">
-                <div className="col-md-12">
-                  <div className="form-group">
-                    <TextField
-                      label="House number and street name"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="streetAddressLine1"
-                      onChange={onChangeInput}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <TextField
-                      label="Apartment, suite, unit, etc. (optional)"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="streetAddressLine2"
-                      onChange={onChangeInput}
-                    />
-                  </div>
-                </div>
-              </div>
+              <TextField
+                label="House number and street name"
+                variant="outlined"
+                className="w-100 mb-2"
+                size="small"
+                name="streetAddressLine1"
+                value={formFields.streetAddressLine1}
+                onChange={handleInputChange}
+                required
+              />
+              <TextField
+                label="Apartment, suite, unit, etc. (optional)"
+                variant="outlined"
+                className="w-100"
+                size="small"
+                name="streetAddressLine2"
+                value={formFields.streetAddressLine2}
+                onChange={handleInputChange}
+              />
 
               <h6>Town / City *</h6>
-
-              <div className="row">
-                <div className="col-md-12">
-                  <div className="form-group">
-                    <TextField
-                      label="City"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="city"
-                      onChange={onChangeInput}
-                    />
-                  </div>
-                </div>
-              </div>
+              <TextField
+                label="City"
+                variant="outlined"
+                className="w-100"
+                size="small"
+                name="city"
+                value={formFields.city}
+                onChange={handleInputChange}
+                required
+              />
 
               <h6>State / County *</h6>
-
-              <div className="row">
-                <div className="col-md-12">
-                  <div className="form-group">
-                    <TextField
-                      label="State"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="state"
-                      onChange={onChangeInput}
-                    />
-                  </div>
-                </div>
-              </div>
+              <TextField
+                label="State"
+                variant="outlined"
+                className="w-100"
+                size="small"
+                name="state"
+                value={formFields.state}
+                onChange={handleInputChange}
+                required
+              />
 
               <h6>Postcode / ZIP *</h6>
+              <TextField
+                label="ZIP Code"
+                variant="outlined"
+                className="w-100"
+                size="small"
+                name="zipCode"
+                value={formFields.zipCode}
+                onChange={handleInputChange}
+                required
+              />
 
-              <div className="row">
-                <div className="col-md-12">
-                  <div className="form-group">
-                    <TextField
-                      label="ZIP Code"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="zipCode"
-                      onChange={onChangeInput}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="row">
+              <div className="row mt-3">
                 <div className="col-md-6">
-                  <div className="form-group">
-                    <TextField
-                      label="Phone Number"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="phoneNumber"
-                      onChange={onChangeInput}
-                    />
-                  </div>
+                  <TextField
+                    label="Phone Number"
+                    variant="outlined"
+                    className="w-100"
+                    size="small"
+                    name="phoneNumber"
+                    value={formFields.phoneNumber}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
 
                 <div className="col-md-6">
-                  <div className="form-group">
-                    <TextField
-                      label="Email Address"
-                      variant="outlined"
-                      className="w-100"
-                      size="small"
-                      name="email"
-                      onChange={onChangeInput}
-                    />
-                  </div>
+                  <TextField
+                    label="Email Address"
+                    variant="outlined"
+                    className="w-100"
+                    size="small"
+                    name="email"
+                    value={formFields.email}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
               </div>
             </div>
@@ -360,39 +307,25 @@ const Checkout = () => {
                         <th>Subtotal</th>
                       </tr>
                     </thead>
-
                     <tbody>
-                      {cartData?.length !== 0 &&
-                        cartData?.map((item, index) => {
-                          return (
-                            <tr>
-                              <td>
-                                {item?.productTitle?.substr(0, 20) + "..."}{" "}
-                                <b>× {item?.quantity}</b>
-                              </td>
-
-                              <td>
-                                {item?.subTotal?.toLocaleString("en-US", {
-                                  style: "currency",
-                                  currency: "INR",
-                                })}
-                              </td>
-                            </tr>
-                          );
-                        })}
-
+                      {cartData?.map((item, index) => (
+                        <tr key={`product-${item.id || index}`}>
+                          <td>
+                            {`${item.productTitle?.substring(0, 20)}...`}
+                            <b> × {item.quantity}</b>
+                          </td>
+                          <td>
+                            {(item.price * item.quantity).toLocaleString("en-US", {
+                              style: "currency",
+                              currency: "INR",
+                            })}
+                          </td>
+                        </tr>
+                      ))}
                       <tr>
-                        <td>Subtotal </td>
-
+                        <td>Subtotal</td>
                         <td>
-                          {(cartData?.length !== 0
-                            ? cartData
-                                ?.map(
-                                  (item) => parseInt(item.price) * item.quantity
-                                )
-                                .reduce((total, value) => total + value, 0)
-                            : 0
-                          )?.toLocaleString("en-US", {
+                          {calculateSubtotal(cartData).toLocaleString("en-US", {
                             style: "currency",
                             currency: "INR",
                           })}
@@ -405,8 +338,10 @@ const Checkout = () => {
                 <Button
                   type="submit"
                   className="btn-blue bg-red btn-lg btn-big"
+                  disabled={isLoading || cartData.length === 0}
+                  startIcon={<IoBagCheckOutline />}
                 >
-                  <IoBagCheckOutline /> &nbsp; Checkout
+                  {isLoading ? "Processing..." : "Checkout"}
                 </Button>
               </div>
             </div>

@@ -30,9 +30,7 @@ const Navigation = (props) => {
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    // localStorage.removeItem("location");
     context.setIsLogin(false);
-    // window.location.href = "/signIn"
     history("/signIn");
   };
 
@@ -45,6 +43,7 @@ const Navigation = (props) => {
               <Button
                 className="allCatTab align-items-center res-hide"
                 onClick={() => setisopenSidebarVal(!isopenSidebarVal)}
+                aria-label="Toggle categories menu"
               >
                 <span className="icon1 mr-2">
                   <IoIosMenu />
@@ -61,37 +60,33 @@ const Navigation = (props) => {
                 }`}
               >
                 <ul>
-                  {props.navData?.map((item, index) => {
-                    return (
-                      <li>
-                        <Link to={`/products/category/${item?._id}`}>
-                          <Button>
-                            <img
-                              src={item?.images[0]}
-                              width="20"
-                              className="mr-2"
-                              alt=""
-                            />{" "}
-                            {item?.name} <FaAngleRight className="ml-auto" />
-                          </Button>
-                        </Link>
-                        {item?.children?.length !== 0 && (
-                          <div className="submenu">
-                            {item?.children?.map((subCat, key) => {
-                              return (
-                                <Link
-                                  to={`/products/subCat/${subCat?._id}`}
-                                  key={key}
-                                >
-                                  <Button>{subCat?.name}</Button>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
+                  {props.navData?.map((item) => (
+                    <li key={`cat-${item._id}`}>
+                      <Link to={`/products/category/${item._id}`}>
+                        <Button component="div">
+                          <img
+                            src={item?.images[0]}
+                            width="20"
+                            className="mr-2"
+                            alt={item.name}
+                          />
+                          {item.name} <FaAngleRight className="ml-auto" />
+                        </Button>
+                      </Link>
+                      {item?.children?.length > 0 && (
+                        <div className="submenu">
+                          {item.children.map((subCat) => (
+                            <Link
+                              to={`/products/subCat/${subCat._id}`}
+                              key={`subcat-${subCat._id}`}
+                            >
+                              <Button component="div">{subCat.name}</Button>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -102,94 +97,91 @@ const Navigation = (props) => {
               isOpenNav === true ? "open" : "close"
             }`}
           >
-            <div className="res-nav-overlay" onClick={props.closeNav}></div>
+            <div
+              className="res-nav-overlay"
+              onClick={props.closeNav}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && props.closeNav()}
+              aria-label="Close navigation"
+            ></div>
 
             <div className="res-nav">
               {context.windowWidth < 992 && (
                 <div className="pl-3">
                   <Link to="/" className="logo">
-                    <img src={Logo} alt="logo" />
+                    <img src={Logo} alt="website logo" />
                   </Link>
                 </div>
               )}
 
               <ul className="list list-inline ml-auto">
                 {context.windowWidth < 992 && (
-                  <>
-                    <li className="list-inline-item">
-                      <div className="p-3">
-                        {context.countryList.length !== 0 &&
-                          context.windowWidth < 992 && <CountryDropdown />}
-                      </div>
-                    </li>
-                  </>
+                  <li className="list-inline-item">
+                    <div className="p-3">
+                      {context.countryList.length !== 0 &&
+                        context.windowWidth < 992 && <CountryDropdown />}
+                    </div>
+                  </li>
                 )}
-                {
-                  //   <li className="list-inline-item" onClick={props.closeNav}>
-                  //   <Link to="/">
-                  //     <Button>Home</Button>
-                  //   </Link>
-                  // </li>
-                }
+
                 {props.navData
-                  .filter((item, idx) => idx < 7)
-                  .map((item, index) => {
-                    return (
-                      <li className="list-inline-item">
-                        <Link
-                          to={`/products/category/${item?._id}`}
-                          onClick={props.closeNav}
+                  .filter((_, idx) => idx < 7)
+                  .map((item, index) => (
+                    <li className="list-inline-item" key={`main-nav-${item._id}`}>
+                      <Link
+                        to={`/products/category/${item._id}`}
+                        onClick={props.closeNav}
+                      >
+                        <Button component="div">
+                          <img
+                            src={item.images[0]}
+                            width="20"
+                            className="mr-2"
+                            alt={item.name}
+                          />
+                          {item.name}
+                        </Button>
+                      </Link>
+
+                      {item?.children?.length > 0 && context.windowWidth < 992 && (
+                        <button
+                          type="button"
+                          className={`arrow ${
+                            isOpenSubMenuIndex === index &&
+                            isOpenSubMenu_ === true &&
+                            "rotate"
+                          }`}
+                          onClick={() => IsOpenSubMenu(index)}
+                          aria-label={`Toggle ${item.name} submenu`}
                         >
-                          <Button>
-                            <img
-                              src={item?.images[0]}
-                              width="20"
-                              className="mr-2"
-                              alt=""
-                            />{" "}
-                            {item?.name}
-                          </Button>
-                        </Link>
+                          <FaAngleDown />
+                        </button>
+                      )}
 
-                        {item?.children?.length !== 0 &&
-                          context.windowWidth < 992 && (
-                            <span
-                              className={`arrow ${
-                                isOpenSubMenuIndex === index &&
-                                isOpenSubMenu_ === true &&
-                                "rotate"
-                              }`}
-                              onClick={() => IsOpenSubMenu(index)}
+                      {item?.children?.length > 0 && (
+                        <div
+                          className={`submenu ${
+                            isOpenSubMenuIndex === index &&
+                            isOpenSubMenu_ === true &&
+                            "open"
+                          }`}
+                        >
+                          {item.children.map((subCat) => (
+                            <Link
+                              to={`/products/subCat/${subCat._id}`}
+                              key={`sub-nav-${subCat._id}`}
+                              onClick={props.closeNav}
                             >
-                              <FaAngleDown />
-                            </span>
-                          )}
-
-                        {item?.children?.length !== 0 && (
-                          <div
-                            className={`submenu ${
-                              isOpenSubMenuIndex === index &&
-                              isOpenSubMenu_ === true &&
-                              "open"
-                            }`}
-                          >
-                            {item?.children?.map((subCat, key) => {
-                              return (
-                                <Link
-                                  to={`/products/subCat/${subCat?._id}`}
-                                  key={key}
-                                  onClick={props.closeNav}
-                                >
-                                  <Button>{subCat?.name}</Button>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
+                              <Button component="div">{subCat.name}</Button>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  ))}
               </ul>
+
               {context.windowWidth < 992 && (
                 <>
                   {context?.isLogin === false ? (
@@ -201,10 +193,16 @@ const Navigation = (props) => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="pt-3 pl-3 pr-3"  onClick={logout}>
-                       <Button className="btn-blue w-100 btn-big">
-                         <RiLogoutCircleRFill/> Logout
-                        </Button>
+                    <div 
+                      className="pt-3 pl-3 pr-3"
+                      role="button"
+                      tabIndex={0}
+                      onClick={logout}
+                      onKeyDown={(e) => e.key === 'Enter' && logout()}
+                    >
+                      <Button className="btn-blue w-100 btn-big">
+                        <RiLogoutCircleRFill /> Logout
+                      </Button>
                     </div>
                   )}
                 </>

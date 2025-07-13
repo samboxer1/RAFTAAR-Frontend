@@ -6,12 +6,9 @@ import {
   Rating,
   Tooltip
 } from '@mui/material';
-import {
-  BsCartFill,
-  FaHeart,
-  FaRegHeart,
-  MdOutlineCompareArrows
-} from 'react-icons/all';
+import { BsCartFill } from 'react-icons/bs';
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { MdOutlineCompareArrows } from 'react-icons/md';
 import { useParams } from 'react-router-dom';
 import ProductZoom from "../../Components/ProductZoom";
 import QuantityBox from "../../Components/QuantityBox";

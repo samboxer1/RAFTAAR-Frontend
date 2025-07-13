@@ -18,7 +18,7 @@
     "firebase": "^10.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^5.0.1",
+    "react-icons": "^5.5.0",
     "react-infinite-scroll-component": "^6.1.0",
     "react-inner-image-zoom": "^3.0.2",
     "react-lazy-load-image-component": "^1.6.0",
@@ -32,8 +32,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "set PORT=3008 && react-scripts start",
-    "build": "CI=1 react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false CI=1 react-scripts build",
+    "start": "react-scripts start",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint . --ext .js,.jsx"
@@ -57,14 +57,17 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2"
+    "eslint": "^8.56.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.0"
   },
   "lint-staged": {
-    "*.{js,jsx}": ["eslint --fix", "git add"]
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "husky": {
     "hooks": {

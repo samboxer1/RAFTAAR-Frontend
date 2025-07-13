@@ -9,8 +9,8 @@ import { MyContext } from "../../App";
 import { postData } from "../../utils/api";
 import PropTypes from 'prop-types';
 import React from 'react';
-import Logo from '../../assets/logo.png'; // Update path as needed
-import GoogleImg from '../../assets/google.png'; // Update path as needed
+import Logo from '../../assets/images/logo.jpg'; // Update path as needed
+import GoogleImg from '../../assets/images/googleImg.png'; // Update path as needed
 
 const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import Rating from '@mui/material/Rating';
 import QuantityBox from "../../Components/QuantityBox";
@@ -106,7 +107,7 @@ const Cart = () => {
     return (
         <section className="section cartPage">
             <div className="container">
-                <h2 className="hd mb-1">Your Cart</h2>
+                <h1 className="hd mb-1">Your Cart</h1>
                 <p>There are <b className="text-red">{cartData?.length || 0}</b> products in your cart</p>
 
                 {cartData?.length ? (
@@ -182,7 +183,7 @@ const Cart = () => {
 
                         <div className="col-md-3">
                             <div className="card border p-3 cartDetails">
-                                <h4>CART TOTALS</h4>
+                                <h2>CART TOTALS</h2>
                                 <div className="d-flex align-items-center mb-3">
                                     <span>Subtotal</span>
                                     <span className="ml-auto text-red font-weight-bold">
@@ -227,7 +228,7 @@ const Cart = () => {
                             height="150"
                             loading="lazy"
                         />
-                        <h3>Your Cart is currently empty</h3>
+                        <h2>Your Cart is currently empty</h2>
                         <br />
                         <Link to="/">
                             <Button className='btn-blue bg-red btn-lg btn-big btn-round'>

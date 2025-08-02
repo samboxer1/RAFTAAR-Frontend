@@ -1,3 +1,5 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import Rating from "@mui/material/Rating";
 import { TfiFullscreen } from "react-icons/tfi";
 import Button from "@mui/material/Button";
@@ -5,38 +7,25 @@ import { IoMdHeartEmpty } from "react-icons/io";
 import { useContext, useEffect, useRef, useState } from "react";
 import { MyContext } from "../../App";
 import { Link } from "react-router-dom";
-
-import Slider from "react-slick";
 import Skeleton from "@mui/material/Skeleton";
 import { IoIosImages } from "react-icons/io";
 import { fetchDataFromApi, postData } from "../../utils/api";
 import { FaHeart } from "react-icons/fa";
 
-const ProductItem = (props) => {
+const ProductItem = ({ item, itemView }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAddedToMyList, setSsAddedToMyList] = useState(false);
+  const [isAddedToMyList, setIsAddedToMyList] = useState(false);
 
   const context = useContext(MyContext);
-
   const sliderRef = useRef();
-
-  var settings = {
-    dots: true,
-    infinite: true,
-    loop: true,
-    speed: 200,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: 100,
-  };
 
   const viewProductDetails = (id) => {
     context.openProductDetailsModal(id, true);
   };
 
   const handleMouseEnter = (id) => {
-    if (isLoading === false) {
+    if (!isLoading) {
       setIsHovered(true);
       setTimeout(() => {
         if (sliderRef.current) {
@@ -46,18 +35,18 @@ const ProductItem = (props) => {
     }
 
     const user = JSON.parse(localStorage.getItem("user"));
-
-    fetchDataFromApi(
-      `/api/my-list?productId=${id}&userId=${user?.userId}`
-    ).then((res) => {
-      if (res.length !== 0) {
-        setSsAddedToMyList(true);
-      }
-    });
+    if (user?.userId) {
+      fetchDataFromApi(`/api/my-list?productId=${id}&userId=${user.userId}`)
+        .then((res) => {
+          if (res.length !== 0) {
+            setIsAddedToMyList(true);
+          }
+        });
+    }
   };
 
   const handleMouseLeave = () => {
-    if (isLoading === false) {
+    if (!isLoading) {
       setIsHovered(false);
       setTimeout(() => {
         if (sliderRef.current) {
@@ -68,181 +57,183 @@ const ProductItem = (props) => {
   };
 
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const addToMyList = (id) => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (user !== undefined && user !== null && user !== "") {
-      const data = {
-        productTitle: props?.item?.name,
-        image: props.item?.images[0],
-        rating: props?.item?.rating,
-        price: props?.item?.price,
-        productId: id,
-        userId: user?.userId,
-      };
-      postData(`/api/my-list/add/`, data).then((res) => {
-        if (res.status !== false) {
-          context.setAlertBox({
-            open: true,
-            error: false,
-            msg: "the product added in my list",
-          });
-
-          fetchDataFromApi(
-            `/api/my-list?productId=${id}&userId=${user?.userId}`
-          ).then((res) => {
-            if (res.length !== 0) {
-              setSsAddedToMyList(true);
-            }
-          });
-        } else {
-          context.setAlertBox({
-            open: true,
-            error: true,
-            msg: res.msg,
-          });
-        }
-      });
-    } else {
+    if (!user) {
       context.setAlertBox({
         open: true,
         error: true,
         msg: "Please Login to continue",
       });
+      return;
     }
+
+    const data = {
+      productTitle: item?.name,
+      image: item?.images?.[0],
+      rating: item?.rating,
+      price: item?.price,
+      productId: id,
+      userId: user.userId,
+    };
+
+    postData(`/api/my-list/add/`, data).then((res) => {
+      if (res.status !== false) {
+        context.setAlertBox({
+          open: true,
+          error: false,
+          msg: "The product was added to your list",
+        });
+
+        fetchDataFromApi(`/api/my-list?productId=${id}&userId=${user.userId}`)
+          .then((res) => {
+            if (res.length !== 0) {
+              setIsAddedToMyList(true);
+            }
+          });
+      } else {
+        context.setAlertBox({
+          open: true,
+          error: true,
+          msg: res.msg,
+        });
+      }
+    });
   };
 
   return (
-    <>
-      <div
-        className={`productItem ${props.itemView}`}
-        onMouseEnter={() =>
-          handleMouseEnter(
-            props?.itemView === "recentlyView"
-              ? props.item?.prodId
-              : props.item?.id
-          )
-        }
-        onMouseLeave={handleMouseLeave}
-        
-      >
-        <div className="img_rapper">
-          <Link
-            to={`/product/${
-              props?.itemView === "recentlyView"
-                ? props.item?.prodId
-                : props.item?.id
-            }`}
-          >
-            <div className="productItemSliderWrapper">
-
-            {isLoading === true ? (
+    <div
+      className={`productItem ${itemView}`}
+      onMouseEnter={() =>
+        handleMouseEnter(itemView === "recentlyView" ? item?.prodId : item?.id)
+      }
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="img_rapper">
+        <Link
+          to={`/product/${
+            itemView === "recentlyView" ? item?.prodId : item?.id
+          }`}
+          aria-label={`View ${item?.name} details`}
+        >
+          <div className="productItemSliderWrapper">
+            {isLoading ? (
               <Skeleton variant="rectangular" width={300} height={400}>
                 <IoIosImages />
               </Skeleton>
             ) : (
-              <img src={props.item?.images[0]} className="w-100 img1" alt="" />
+              <>
+                <img 
+                  src={item?.images?.[0]} 
+                  className="w-100 img1" 
+                  alt={item?.name || 'Product image'} 
+                />
+                {item?.images?.length > 1 && (
+                  <img 
+                    src={item?.images?.[1]} 
+                    className="w-100 img2" 
+                    alt={item?.name || 'Product secondary image'} 
+                  />
+                )}
+              </>
             )}
-
-            {props.item?.images.length > 1 && (
-              <img src={props.item?.images[1]} className="w-100 img2" alt="" />
-            )}
-
-
-              {
-                // isHovered === true &&
-                // <Slider {...settings} ref={sliderRef} className='productItemSlider'>
-                //     {
-                //         props.item?.images?.map((image, index) => {
-                //             return (
-                //                 <div className='slick-slide' key={index}>
-                //                     <img src={image} className="w-100" />
-                //                 </div>
-                //             )
-                //         })
-                //     }
-                // </Slider>
-              }
-            </div>
-
-            
-          </Link>
-
-          <span className="badge badge-primary">{props.item?.discount}%</span>
-          <div className="actions">
-            <Button
-              onClick={() =>
-                viewProductDetails(
-                  props?.itemView === "recentlyView"
-                    ? props.item?.prodId
-                    : props.item?.id
-                )
-              }
-            >
-              <TfiFullscreen />
-            </Button>
-
-            <Button
-              className={isAddedToMyList === true && "active"}
-              onClick={() =>
-                addToMyList(
-                  props?.itemView === "recentlyView"
-                    ? props.item?.prodId
-                    : props.item?.id
-                )
-              }
-            >
-              {isAddedToMyList === true ? (
-                <FaHeart style={{ fontSize: "20px" }} />
-              ) : (
-                <IoMdHeartEmpty style={{ fontSize: "20px" }} />
-              )}
-            </Button>
           </div>
-        </div>
+        </Link>
 
-        <div className="info" title={props?.item?.name}>
-          <Link
-            to={`/product/${
-              props?.itemView === "recentlyView"
-                ? props.item?.prodId
-                : props.item?.id
-            }`}
+        {item?.discount && (
+          <span className="badge badge-primary">{item.discount}%</span>
+        )}
+
+        <div className="actions">
+          <Button
+            onClick={() =>
+              viewProductDetails(
+                itemView === "recentlyView" ? item?.prodId : item?.id
+              )
+            }
+            aria-label="Quick view"
           >
-            <h4>{props?.item?.name?.substr(0, 20) + "..."}</h4>
-          </Link>
+            <TfiFullscreen />
+          </Button>
 
-          {props?.item?.countInStock >= 1 ? (
-            <span className="text-success d-block">In Stock</span>
-          ) : (
-            <span className="text-danger d-block">Out of Stock</span>
-          )}
-
-          <Rating
-            className="mt-2 mb-2"
-            name="read-only"
-            value={props?.item?.rating}
-            readOnly
-            size="small"
-            precision={0.5}
-          />
-
-          <div className="d-flex">
-            <span className="oldPrice">Rs {props?.item?.oldPrice}</span>
-            <span className="netPrice text-danger ml-2">
-              Rs {props?.item?.price}
-            </span>
-          </div>
+          <Button
+            className={isAddedToMyList ? "active" : ""}
+            onClick={() =>
+              addToMyList(
+                itemView === "recentlyView" ? item?.prodId : item?.id
+              )
+            }
+            aria-label={isAddedToMyList ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {isAddedToMyList ? (
+              <FaHeart style={{ fontSize: "20px" }} />
+            ) : (
+              <IoMdHeartEmpty style={{ fontSize: "20px" }} />
+            )}
+          </Button>
         </div>
       </div>
 
-      {/*<ProductModal/> */}
-    </>
+      <div className="info" title={item?.name}>
+        <Link
+          to={`/product/${
+            itemView === "recentlyView" ? item?.prodId : item?.id
+          }`}
+        >
+          <h4>{item?.name?.substr(0, 20) + "..."}</h4>
+        </Link>
+
+        {item?.countInStock >= 1 ? (
+          <span className="text-success d-block">In Stock</span>
+        ) : (
+          <span className="text-danger d-block">Out of Stock</span>
+        )}
+
+        <Rating
+          className="mt-2 mb-2"
+          name="read-only"
+          value={item?.rating}
+          readOnly
+          size="small"
+          precision={0.5}
+        />
+
+        <div className="d-flex">
+          {item?.oldPrice && (
+            <span className="oldPrice">Rs {item.oldPrice}</span>
+          )}
+          <span className="netPrice text-danger ml-2">
+            Rs {item?.price}
+          </span>
+        </div>
+      </div>
+    </div>
   );
+};
+
+ProductItem.propTypes = {
+  item: PropTypes.shape({
+    id: PropTypes.string,
+    prodId: PropTypes.string,
+    name: PropTypes.string,
+    images: PropTypes.arrayOf(PropTypes.string),
+    rating: PropTypes.number,
+    price: PropTypes.number,
+    oldPrice: PropTypes.number,
+    discount: PropTypes.number,
+    countInStock: PropTypes.number
+  }).isRequired,
+  itemView: PropTypes.string
+};
+
+ProductItem.defaultProps = {
+  itemView: ''
 };
 
 export default ProductItem;

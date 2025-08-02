@@ -1,27 +1,22 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import Button from "@mui/material/Button";
 import { IoIosMenu } from "react-icons/io";
-import { FaAngleDown } from "react-icons/fa6";
+import { FaAngleDown, FaAngleRight } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
-import { FaAngleRight } from "react-icons/fa6";
 import { MyContext } from "../../../App";
 import CountryDropdown from "../../CountryDropdown";
 import Logo from "../../../assets/images/logo.jpg";
 import { RiLogoutCircleRFill } from "react-icons/ri";
-import React from 'react'; // Add at the top
 
-const Navigation = (props) => {
+const Navigation = ({ isOpenNav, navData, closeNav }) => {
   const [isopenSidebarVal, setisopenSidebarVal] = useState(false);
-  const [isOpenNav, setIsOpenNav] = useState(false);
   const [isOpenSubMenuIndex, setIsOpenSubMenuIndex] = useState(null);
   const [isOpenSubMenu_, setIsOpenSubMenu_] = useState(false);
 
   const context = useContext(MyContext);
   const history = useNavigate();
-
-  useEffect(() => {
-    setIsOpenNav(props.isOpenNav);
-  }, [props.isOpenNav]);
 
   const IsOpenSubMenu = (index) => {
     setIsOpenSubMenuIndex(index);
@@ -61,7 +56,7 @@ const Navigation = (props) => {
                 }`}
               >
                 <ul>
-                  {props.navData?.map((item) => (
+                  {navData?.map((item) => (
                     <li key={`cat-${item._id}`}>
                       <Link to={`/products/category/${item._id}`}>
                         <Button component="div">
@@ -100,10 +95,10 @@ const Navigation = (props) => {
           >
             <div
               className="res-nav-overlay"
-              onClick={props.closeNav}
+              onClick={closeNav}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && props.closeNav()}
+              onKeyDown={(e) => e.key === 'Enter' && closeNav()}
               aria-label="Close navigation"
             ></div>
 
@@ -126,13 +121,13 @@ const Navigation = (props) => {
                   </li>
                 )}
 
-                {props.navData
+                {navData
                   .filter((_, idx) => idx < 7)
                   .map((item, index) => (
                     <li className="list-inline-item" key={`main-nav-${item._id}`}>
                       <Link
                         to={`/products/category/${item._id}`}
-                        onClick={props.closeNav}
+                        onClick={closeNav}
                       >
                         <Button component="div">
                           <img
@@ -172,7 +167,7 @@ const Navigation = (props) => {
                             <Link
                               to={`/products/subCat/${subCat._id}`}
                               key={`sub-nav-${subCat._id}`}
-                              onClick={props.closeNav}
+                              onClick={closeNav}
                             >
                               <Button component="div">{subCat.name}</Button>
                             </Link>
@@ -214,6 +209,19 @@ const Navigation = (props) => {
       </div>
     </nav>
   );
+};
+
+Navigation.propTypes = {
+  isOpenNav: PropTypes.bool.isRequired,
+  navData: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      images: PropTypes.arrayOf(PropTypes.string),
+      children: PropTypes.array
+    })
+  ).isRequired,
+  closeNav: PropTypes.func.isRequired
 };
 
 export default Navigation;
